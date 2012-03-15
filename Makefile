@@ -10,8 +10,8 @@ OBJS:=		common.o main.o init.o sigevents.o config.o log.o emails.o digest.o
 LIBRARIES:=	-lbeecrypt
 INCLUDES:=	-I$(HOME)/include
 
-CFLAGS:=	-O2 -Wall -pipe
-#CFLAGS:=	-Wall -pipe -ggdb
+#CFLAGS:=	-O2 -Wall -pipe
+CFLAGS:=	-Wall -pipe -ggdb
 
 PREFIX:=	$(HOME)
 INSTALLBIN:=	$(PREFIX)/bin
