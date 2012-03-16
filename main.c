@@ -54,7 +54,7 @@ static int	replyto(int sockfd, const struct sockaddr *sockaddr, socklen_t sockad
 int	mingerd_process(const CONFIG *conf)
 {
 	struct	hostent		*he;
-	int			sockfd, ret = 0;
+	int			sockfd, ret;
 	struct	sockaddr_in	socklocal, sockremote;
 	socklen_t		sockremotelen;
 	char			buf[1024];
@@ -87,18 +87,19 @@ int	mingerd_process(const CONFIG *conf)
 
 	printlog(stdlog, PL_INFO, "Ready to answer requests ...");
 
+	sockremotelen = sizeof(sockremote);
+	ret = 0;
+
 	while ( ! terminate ) {
 		int	len, r;
 		char	*em, *digest, *taglist;
 
 		memset(&sockremote, 0, sizeof(sockremote));
-		sockremotelen = sizeof(sockremote);
+
 		len = recvfrom(sockfd, buf, sizeof(buf)-1, MSG_NOSIGNAL, (struct sockaddr *)&sockremote, &sockremotelen);
 
 		if ( len < 0 ) {
-			if ( terminate ) {
-				ret = 0;
-			}else{
+			if ( ! terminate ) {
 				printlog(stdlog, PL_ERR, "Trying to receive: %m");
 				ret = 1;
 			}
@@ -113,8 +114,8 @@ int	mingerd_process(const CONFIG *conf)
 
 		printlog(stdlog, PL_DEBUG, "Received [%s] (%d bytes) from %s", buf, len, inet_ntoa(sockremote.sin_addr));
 
-		/* query-string = mailbox [SP %x64 "=" digest] [SP tag-list]		*/
-		/* ex: indians@ledav.net d=ab254de144f					*/
+		/* query-string = mailbox [SP %x64 "=" digest] [SP tag-list]	*/
+		/* ex: david@ledav.net d=zIi/VNDcyYv5nBHx/OwSRQ==		*/
 
 		em      = strtok(buf,  " "); /* Get the email address		*/
 		digest  = strtok(NULL, " "); /* Get the digest			*/
@@ -135,15 +136,10 @@ int	mingerd_process(const CONFIG *conf)
 			ret = 1;
 			break;
 		}
-
-		sleep(1);
 	}
 
 	printlog(stdlog, PL_DEBUG, "Closing socket ...");
-
-	if ( close(sockfd) ) {
-		printlog(stdlog, PL_NOTICE, "Trying to close socket: %m");
-	}
+	close(sockfd);
 
 	return ret;
 }

@@ -62,7 +62,7 @@ bool	check_digest(const char *digest, const char *secret, const char *em)
 
 	b = rtrim(b64encode(&md5, 16));
 
-	printlog(stdlog, PL_DEBUG, "Calculated b64 digest %p [%s]", b, b);
+	printlog(stdlog, PL_DEBUG, "Calculated b64 [%s]", b);
 
 	ret = (strcmp(b, digest) == 0);
 	free(b);

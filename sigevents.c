@@ -60,29 +60,12 @@ int	install_sigevents(void)
 	sigaction(SIGINT,  &sigopt, &oldsigint);
 	sigaction(SIGQUIT, &sigopt, &oldsigquit);
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGTERM);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGQUIT);
+	sigfillset(&sigset);
+	sigdelset(&sigset, SIGTERM);
+	sigdelset(&sigset, SIGINT);
+	sigdelset(&sigset, SIGQUIT);
+
+	sigprocmask(SIG_SETMASK, &sigset, NULL); /* Keep non interresting signals blocked */
 
 	return 0;
-}
-
-int	restore_sigevents(void)
-{
-	sigaction(SIGTERM, &oldsigterm, NULL);
-	sigaction(SIGINT,  &oldsigint,  NULL);
-	sigaction(SIGQUIT, &oldsigquit, NULL);
-
-	return 0;
-}
-
-void	block_sigevents(void)
-{
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
-}
-
-void	unblock_sigevents(void)
-{
-	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 }
