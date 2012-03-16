@@ -73,6 +73,37 @@ static int	makepid(char *file)
 	return 0;
 }
 
+static int	killpidfile(const char *file, int sig)
+/* <0 - Error and errno is set.
+ * =0 - Corresponding process is not running.
+ * >0 - Pid of the process.
+ */
+{
+        int	fd, pidtmp = 0, len;
+        char	pid[7];
+
+	if ( (fd = open(file, O_RDONLY)) >= 0 ) {
+		/* File Exists */
+		if ( flock(fd, LOCK_NB|LOCK_EX) < 0 ) {
+			/* File is locked */
+			if ( (len = read(fd, pid, sizeof(pid)-1)) >= 0 ) {
+				/* File must contain the pid */
+				pid[len] = 0;
+				if ( ! (pidtmp = atoi(pid)) ) {
+					pidtmp = -1;
+					errno = ENODATA;
+				}else{
+					/* File contains a pid. Trying to send the signal...    */
+					if ( kill(pidtmp, sig) < 0 ) pidtmp = -1;
+				}
+			}
+			else	pidtmp = -1;    /* Keep errno of 'read' */
+		}
+		close(fd);
+	}
+	return pidtmp;
+}
+
 static pid_t	startdaemon(void)
 {
 	register int	i;
@@ -117,24 +148,40 @@ static void	print_help(const char *proc)
 	P_NAME_LONG" v"P_VERSION" made by David De Grave.\n"
 	"\n"
 	"Usage:\n"
-        " %s [-hd]\n"
+        " %s [-hdu]\n"
         "\n"
         "Options:\n"
 	" -h         Display this help screen.\n"
         " -d         Turn the debugging mode on (no daemonize + more logging on terminal).\n"
+        " -u         Unload itself cleanly from memory.\n"
         "\n", proc);
 }
 
 static void	process_parameters(int argc, char **argv)
 {
 	char	opt;
-        
-	while ( (opt = getopt(argc, argv, "dh")) > 0 ) {
+	int	r;
+
+	while ( (opt = getopt(argc, argv, "dhu")) > 0 ) {
         	switch ( opt ) {
 			case 'd':
 				debug = true;
 				config.logpriority = PL_DEBUG;
 				break;
+
+			case 'u':
+				if ( ! (r = killpidfile(PID_FILE, SIGTERM)) ) {
+					puts(P_NAME_SHORT" is not running ...");
+					exit(1);
+				}else
+				if ( r > 0 ) {
+					while ( kill(r, 0) == 0 ) sleep(1);	/* Wait until daemon is unloaded	*/
+					puts(P_NAME_SHORT" unloaded ...");
+				}else{
+					printf("Error reading %s: %m\n", PID_FILE);
+					exit(2);
+				}
+				exit(0);
 
 			default:
 				print_help(argv[0]);

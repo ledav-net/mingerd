@@ -27,8 +27,6 @@ extern bool		terminate;				/* True when the process have to terminate	*/
 extern bool		sig_event;				/* True when a handled signal was caught	*/
 extern int		sig_num;				/* Signal received				*/
 
-extern int		install_sigevents	(void);
-extern int		restore_sigevents	(void);
-extern void		block_sigevents		(void);
+extern int		install_sigevents	(void);		/* Install signal handler & intr mask		*/
 
 #endif
