@@ -196,6 +196,7 @@ int	check_email_active(const char *em)
 		return -1;
 	}
 	if ( s.st_mtime > sysuser.last ) {
+		printlog(stdlog, PL_INFO, "System user database change detected. Reloading ...");
 		if ( load_sysuser_cache(PASSWDF) < 0 ) return -1;
 		sysuser.last = s.st_mtime;
 	}
@@ -205,6 +206,7 @@ int	check_email_active(const char *em)
 		return -1;
 	}
 	if ( s.st_mtime > aliases.last ) {
+		printlog(stdlog, PL_INFO, "User alias database change detected. Reloading ...");
 		if ( load_aliases_cache(ALIASESF) < 0 ) return -1;
 		aliases.last = s.st_mtime;
 	}

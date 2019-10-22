@@ -43,8 +43,7 @@ static int	replyto(int sockfd, const struct sockaddr *sockaddr, socklen_t sockad
 	int	len;
 	char	resp[256];
 
-	if ( em ) len = snprintf(resp, sizeof(resp), "%s %d", em, status);
-	else	  len = snprintf(resp, sizeof(resp), "%d", status);
+	len = snprintf(resp, sizeof(resp), "%s %d", em, status);
 
 	printlog(stdlog, PL_DEBUG, "Sending [%s] (%d bytes)", resp, len);
 
@@ -85,7 +84,7 @@ int	mingerd_process(const CONFIG *conf)
 		return -3;
 	}
 
-	printlog(stdlog, PL_INFO, "Ready to answer requests ...");
+	printlog(stdlog, PL_NOTICE, "Ready to answer requests ...");
 
 	sockremotelen = sizeof(sockremote);
 	ret = 0;
@@ -123,14 +122,18 @@ int	mingerd_process(const CONFIG *conf)
 
 		printlog(stdlog, PL_DEBUG, "em[%s] digest[%s] taglist[%s]", em, digest, taglist);
 
+		if ( ! em )		/* Sounds better to simply skip the very bad requests ...	*/
+			continue;
+
 		if ( ! check_email(em) ) {
-			r = replyto(sockfd, (struct sockaddr *)&sockremote, sockremotelen, em, ST_BAD_REQUEST);
+		        r = ST_BAD_REQUEST;
 		}else
 		if ( ! (conf->anonymous || check_digest(digest, conf->secret, em)) ) {
-			r = replyto(sockfd, (struct sockaddr *)&sockremote, sockremotelen, em, ST_ACCESS_INVALID);
+			    r = ST_ACCESS_INVALID;
 		}
-		else	r = replyto(sockfd, (struct sockaddr *)&sockremote, sockremotelen, em, check_email_active(em));
+		else    r = check_email_active(em);
 
+		r = replyto(sockfd, (struct sockaddr *)&sockremote, sockremotelen, em, r);
 		if ( r < 0 ) {
 			printlog(stdlog, PL_ERR, "Trying to send: %m");
 			ret = 1;

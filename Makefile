@@ -7,10 +7,9 @@ include         .depends
 
 OBJS:=		common.o main.o init.o sigevents.o config.o log.o emails.o digest.o
 
-LIBRARIES:=	-lbeecrypt
-INCLUDES:=
-
-CFLAGS:=	-O2 -Wall -pipe
+CC ?=		gcc
+CFLAGS ?=	-O2 -Wall -pipe
+LDFLAGS ?=	-lbeecrypt
 #CFLAGS:=	-Wall -pipe -ggdb
 
 VERSION:=	1.x
@@ -23,7 +22,7 @@ INSTALLETC:=	$(PREFIX)/etc
 .SUFFIXES:	.c .o
 
 $(DESTBIN):	$(OBJS)
-		cc $(CFLAGS) -o $(DESTBIN) $(OBJS) $(LIBRARIES)
+		$(CC) $(CFLAGS) -o $(DESTBIN) $(OBJS) $(LDFLAGS)
 
 install:        build
 		@install -D -m 0755 --verbose -s $(DESTBIN) $(INSTALLBIN)/$(DESTBIN)
@@ -34,15 +33,14 @@ install:        build
 uninstall:
 		@rm -vf $(INSTALLBIN)/$(DESTBIN)
 		@mv -vf $(INSTALLETC)/$(DESTBIN).conf $(INSTALLETC)/$(DESTBIN).conf.save
-		@rm -vf $(INSTALLDOC)/$(DESTBIN)-$(VERSION)/README
-		@rm -vf $(INSTALLDOC)/$(DESTBIN)-$(VERSION)/COPYING
+		@rm -vf $(INSTALLDOC)/$(DESTBIN)-$(VERSION)/{README,COPYING}
 		@rmdir -v $(INSTALLDOC)/$(DESTBIN)-$(VERSION)
 
 dep\
 .depends:
 		@echo "Rebuilding dependencies from sources ..."
 		@rm -f .depends
-		@if ls *.c  &> /dev/null; then gcc -M $(INCLUDES) *.c > .depends; else exit 0; fi
+		@if ls *.c  &> /dev/null; then gcc -M *.c > .depends; else exit 0; fi
 
 clean:
 		@rm -vf *~ $(OBJS)
